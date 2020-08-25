@@ -10,23 +10,31 @@ MongoClient.connect(connectionString, { useUnifiedTopology: true })
         console.log("Connection to mongodb successful");
 
         const db = client.db('test-database');
-        const collection = db.collection('test-collection')
+        const collection = db.collection('quotes')
 
-        app.use(bodyParser.urlencoded({ extended: true }));
+        app.use(bodyParser.json());
 
-        app.get("/", (req, res) => {
+        app.get("/api", (req, res) => {
             res.sendFile(__dirname + "/web/index.html");
         })
 
-        app.post('/quotes', (req, res) => {
-            collection.insertOne(req.body)
+        app.post('/api/quotes', (req, res) => {
+            const payload = { ...req.body, publishedOn: new Date().toISOString() }
+            collection.insertOne(payload)
                 .then(result => {
-                    res.redirect("/");
+                    res.end();
                 });
         })
 
-        app.listen(3000, function () {
-            console.log('listening on 3000');
+        app.get("/api/quotes", (req, res) => {
+            res.setHeader("Content-type", "application/json");
+            collection.find().toArray().then(q => {
+                res.end(JSON.stringify(q));
+            });
+        })
+
+        app.listen(3050, function () {
+            console.log('listening on 3050');
         })
 
     }).catch(err => {
